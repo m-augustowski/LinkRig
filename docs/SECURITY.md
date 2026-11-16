@@ -1,0 +1,15 @@
+# Pairing and security
+
+The Mac generates a random 256-bit secret using CryptoKit. Copy it out of band to the test configuration. The CLI creates a new mode-0600 file exclusively, rejecting existing files/symlinks; the companion offers a deliberate clipboard copy. Secrets are not placed in URLs, requests, logs, reports, or source. The pairing file and clipboard themselves must be protected by the developer. Do not save shared schemes with real secret environment values. Clear the clipboard after pairing.
+
+Both commands and acknowledgements are HMAC authenticated with distinct request/response domains. IDs, timestamps, deduplication, and strict freshness checks constrain replay. The secret is run-wide authority: all paired clients may inspect/control the single session. This is not a multi-user permission system. Stop/restart to revoke and rotate. There is no unauthenticated command endpoint, even on loopback; listener defaults to loopback and LAN binding is explicit.
+
+**Control transport is HTTP, authenticated but not encrypted.** On a LAN, observers may see session metadata, conditions and MACs. They cannot derive a random 256-bit secret from those MACs, but can replay an observed valid command during its window (deduplication prevents repeated application), delay/drop traffic, or exhaust bounded listener capacity. Request signing does not provide availability. Use a trusted isolated test network. No TLS server or certificate provisioning is shipped; the SDK's HTTPS URL support does not mean the bundled agent serves HTTPS.
+
+**The data listener is not authenticated.** It forwards only to the operator-configured upstream and has no client-selected destination or open-proxy functionality. Bind only to a trusted test interface and a synthetic/non-sensitive test backend. A reachable peer could consume the fixture or interfere with the aggregate test environment. HTTP fixture contents are intentionally synthetic, with no secrets. The relay never parses or logs application payloads; TLS content remains opaque when explicitly routed over it.
+
+Reports contain session/client identifiers, requested and installed conditions, timestamps, command IDs, and operational messages. Reports are memory-only until explicit export. Headers, bodies, packet captures, pairing values, and application response data are not captured. A user-supplied client name is bounded to printable characters.
+
+Testing process death is handled by a renewable lease, not a defer block. Agent death destroys all relay sockets and leaves no kernel or persistent network changes. Restart requires a fresh secret. A CLI crash can leave its old pairing file; verify the old process is gone, then remove the file explicitly before restarting. No private Apple API, usbmux library, root helper, packet-filter rule, or privileged background daemon is involved.
+
+Report vulnerabilities privately to the repository owner's security contact when one is configured. Until publication establishes that contact, do not publish secrets or exploitable payloads in issue reports.

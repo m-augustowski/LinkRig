@@ -1,0 +1,24 @@
+name: Validate
+on: [push, pull_request]
+jobs:
+  mac-and-ios:
+    runs-on: macos-15
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check Swift formatting
+        run: sh scripts/format.sh check
+      - name: Host unit and real TCP integration tests
+        run: sh scripts/check.sh
+      - name: Build iOS app and test bundles without signing or running
+        run: >-
+          xcodebuild -project Examples/DownloadLab/DownloadLab.xcodeproj
+          -scheme DownloadLab -destination 'generic/platform=iOS'
+          -derivedDataPath /tmp/rig-ios CODE_SIGNING_ALLOWED=NO build-for-testing
+      - name: Build UI-test runner without signing or running
+        run: >-
+          xcodebuild -project Examples/DownloadLab/DownloadLab.xcodeproj
+          -scheme DownloadLabUITests -destination 'generic/platform=iOS'
+          -derivedDataPath /tmp/rig-ios CODE_SIGNING_ALLOWED=NO build-for-testing
+      - name: Package companion without launching
+        run: sh scripts/package-companion.sh
